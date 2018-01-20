@@ -3,18 +3,12 @@
 import logging
 import random
 import sys
-import numpy as np
 
 from Parser import Parser
 from Lexer import Lexer
 from YapyGraph.Vertex import Vertex
 
-import functools
-import graphviz as gv
-
-graph = functools.partial(gv.Graph, format='jpg')
-
-class Generator(object):
+class Reducer(object):
     """
 
     Transformation engine for graphs. Given a set of Productions of the form
@@ -43,61 +37,31 @@ class Generator(object):
             * config - dictionary of options
         Outputs: None
         """
+
         print 'Starting Graph: ', startGraph
         # logging.debug('In applyProductions')
-        #while startGraph.numVertices < int(config['min_vertices']):
-        while startGraph.numVertices < int(NUM_VERTICES):
+        while startGraph.numVertices >= int(config['min_vertices']):      # for reversing grammar rules
             # matchingProductions is a list of (Production, mapping) 
             # pairs where mapping is {vid->vid} dictionary of where 
             # the production's lhs vertices can be found in startGraph.
-            #matchingProductions = self._findMatchingProductions(startGraph, productions)
-            matchingProductions = self._findWeightedMatchingProductions(startGraph, productions)
+            matchingProductions = self._findMatchingProductions(startGraph, productions)
             
             if len(matchingProductions) == 0:
-                raise RuntimeError('No productions match the given graph.')
+                break
+                #raise RuntimeError('No productions match the given graph.')
 
             (prod, mapping) = random.choice(matchingProductions)
-            # print "Prod: ", prod.lhs, " => ", prod.rhs
-            # (prod, mapping) = np.random.choice(matchingProductions, None, True, [80,20])
 
             self._applyProduction(startGraph, prod, mapping)
+            prod.incr_count();
+
+            print "Applied Production: "
+            print prod.lhs, " => ", prod.rhs, ": ", prod.count
 
         self._showCounts(productions)
-        print 'Final Graph: ', startGraph, '\n'
+        
+        print 'Final Graph: ', startGraph
 
-        vertices = [v.name[0] + v.id[1:] for v in startGraph.vertices]
-        edges = [(v1.name[0] + v1.id[1:], v2.name[0] + v2.id[1:]) for (v1, v2) in startGraph.edges]
-        print edges
-
-        """
-        for e in edges:
-            (v1, v2) = e
-            v1_name = v1.name[0] + v1.id[1:]
-            v2_name = v2.name[0] + v2.id[1:]
-            print v1_name, '->', v2_name
-        """
-
-        def add_nodes(graph, nodes):
-            for n in nodes:
-                if isinstance(n, tuple):
-                    graph.node(n[0], **n[1])
-                else:
-                    graph.node(n)
-            return graph
-
-        def add_edges(graph, edges):
-            for e in edges:
-                if isinstance(e[0], tuple):
-                    graph.edge(*e[0], **e[1])
-                else:
-                    graph.edge(*e)
-            return graph
-
-
-        graph_name = 'g_' + NUM_VERTICES        
-        add_edges(add_nodes(graph(), vertices),edges).render('img/' + graph_name) 
-
-    
 
     #--------------------------------------------------------------------------
     def generateFromFile(self, filename):
@@ -277,36 +241,6 @@ class Generator(object):
             else:
                     # logging.debug('Production %s does not match' % prod.lhs)
                     pass
-                    
-        # logging.debug('Out _findMatchingProductions')
-
-        return solutions
-
-    #--------------------------------------------------------------------------
-    def _findWeightedMatchingProductions(self, graph, productions):
-
-        # logging.debug('In _findMatchingProductions')
-        solutions = []
-        weights = [0.8,0.2]
-        # prod = np.random.choice(productions, p=weights)
-
-        cs = np.cumsum(weights) #An array of the weights, cumulatively summed.
-        idx = sum(cs < np.random.rand())  #Find the index of the first weight over a random value.
-        productions[idx].incr_count()
-        prod = productions[idx]
-        
-        print "Selected Production:\n", prod.lhs, " ==> ", prod.rhs, "Count: ", prod.count;
-        # logging.debug('Checking production LHS %s ' % prod.lhs)
-
-        # Find all places where prod.lhs can be found in graph.
-        listOfMatches = graph.search(prod.lhs)
-        if len(listOfMatches) > 0:
-            for match in listOfMatches:
-                solutions.append( (prod, match) )
-                # logging.debug('Production %s matches' % prod.lhs)
-        else:
-                # logging.debug('Production %s does not match' % prod.lhs)
-                pass
                 
         # logging.debug('Out _findMatchingProductions')
         return solutions
@@ -347,20 +281,20 @@ class Generator(object):
         p.parse()
         return p
 
+
     def _showCounts(self, productions):
 
         for prod in productions:
             print prod.lhs, " ==> ", prod.rhs, "\nCount: ", prod.count 
 
+
 # debug, info, warning, error and critical
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
+    if len(sys.argv) != 2:
         print >> sys.stderr, "Usage: %s GRAMMAR_FILE" % sys.argv[0]
         sys.exit(1)
-    e = Generator()
-    #probs = sys.argv[2]
-    NUM_VERTICES = sys.argv[2]
+    e = Reducer()
     e.generateFromFile(sys.argv[1])
 
 # vim:nowrap

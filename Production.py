@@ -14,6 +14,7 @@ class Production(object):
         """
         self._lhs = lhs
         self._rhs = rhs
+        self._count = 0
 
     def __str__(self):
         return str(self._lhs) + ' ==> ' + str(self._rhs) + '\n'
@@ -31,3 +32,11 @@ class Production(object):
     @rhs.setter
     def rhs(self, value):
         self._rhs = value
+
+
+    @property
+    def count(self):
+        return self._count
+
+    def incr_count(self):
+        self._count += 1

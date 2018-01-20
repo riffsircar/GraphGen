@@ -91,6 +91,7 @@ class Parser(object):
 
         # Store the <key,value> pair in the configuration.
         self.config[key.text] = value.text
+        print "Config: ", self.config
 
     #--------------------------------------------------------------------------
     def _parseConfigList(self):

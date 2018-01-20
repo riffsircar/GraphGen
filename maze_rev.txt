@@ -1,0 +1,13 @@
+# Grammar file for testing.
+
+configuration {
+	min_vertices = 2;
+}
+
+productions {
+   A1->A6->A7->A8->A9,A8->A2->A3->A4->A10,A4->A5;
+
+	# Productions
+    A1->A3->A4->A2 ==> A1->A2;
+    A1->A->A2,A->A3 ==> A1->A2;
+}
