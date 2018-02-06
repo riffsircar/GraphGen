@@ -12,7 +12,7 @@ from YapyGraph.Vertex import Vertex
 import functools
 import graphviz as gv
 
-graph = functools.partial(gv.Graph, format='jpg')
+graph = functools.partial(gv.Graph, format='jpg', engine='neato')
 
 class Generator(object):
     """
@@ -66,16 +66,14 @@ class Generator(object):
         print 'Final Graph: ', startGraph, '\n'
 
         vertices = [v.name[0] + v.id[1:] for v in startGraph.vertices]
+        #print vertices
         edges = [(v1.name[0] + v1.id[1:], v2.name[0] + v2.id[1:]) for (v1, v2) in startGraph.edges]
-        print edges
 
-        """
+        
         for e in edges:
             (v1, v2) = e
-            v1_name = v1.name[0] + v1.id[1:]
-            v2_name = v2.name[0] + v2.id[1:]
-            print v1_name, '->', v2_name
-        """
+            print v1, '->', v2
+
 
         def add_nodes(graph, nodes):
             for n in nodes:
@@ -94,7 +92,7 @@ class Generator(object):
             return graph
 
 
-        graph_name = 'g_' + NUM_VERTICES        
+        graph_name = NAME + '_' + NUM_VERTICES        
         add_edges(add_nodes(graph(), vertices),edges).render('img/' + graph_name) 
 
     
@@ -288,6 +286,7 @@ class Generator(object):
         # logging.debug('In _findMatchingProductions')
         solutions = []
         weights = [0.8,0.2]
+        #weights = [1.0]
         # prod = np.random.choice(productions, p=weights)
 
         cs = np.cumsum(weights) #An array of the weights, cumulatively summed.
@@ -360,7 +359,8 @@ if __name__ == '__main__':
         sys.exit(1)
     e = Generator()
     #probs = sys.argv[2]
-    NUM_VERTICES = sys.argv[2]
+    NAME = sys.argv[2]
+    NUM_VERTICES = sys.argv[3]
     e.generateFromFile(sys.argv[1])
 
 # vim:nowrap

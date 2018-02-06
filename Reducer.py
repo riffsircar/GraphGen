@@ -7,6 +7,11 @@ import sys
 from Parser import Parser
 from Lexer import Lexer
 from YapyGraph.Vertex import Vertex
+import functools
+import graphviz as gv
+
+graph = functools.partial(gv.Graph, format='jpg', engine='neato')
+
 
 class Reducer(object):
     """
@@ -37,8 +42,34 @@ class Reducer(object):
             * config - dictionary of options
         Outputs: None
         """
+        def add_nodes(graph, nodes):
+            for n in nodes:
+                if isinstance(n, tuple):
+                    graph.node(n[0], **n[1])
+                else:
+                    graph.node(n)
+            return graph
 
+        def add_edges(graph, edges):
+            for e in edges:
+                if isinstance(e[0], tuple):
+                    graph.edge(*e[0], **e[1])
+                else:
+                    graph.edge(*e)
+            return graph
+
+        vertices = [v.name[0] + v.id[1:] for v in startGraph.vertices]
+        #print vertices
+        edges = [(v1.name[0] + v1.id[1:], v2.name[0] + v2.id[1:]) for (v1, v2) in startGraph.edges]
+        graph_name = 'r_before'        
+        add_edges(add_nodes(graph(), vertices),edges).render('img/' + graph_name) 
         print 'Starting Graph: ', startGraph
+
+        iteration = 0
+        edges = [(v1.name[0] + v1.id[1:], v2.name[0] + v2.id[1:]) for (v1, v2) in startGraph.edges]
+        vertices = [v.name[0] + v.id[1:] for v in startGraph.vertices]
+        graph_name = 'r_' + str(iteration)
+        add_edges(add_nodes(graph(), vertices),edges).render('img/' + graph_name)
         # logging.debug('In applyProductions')
         while startGraph.numVertices >= int(config['min_vertices']):      # for reversing grammar rules
             # matchingProductions is a list of (Production, mapping) 
@@ -53,14 +84,33 @@ class Reducer(object):
             (prod, mapping) = random.choice(matchingProductions)
 
             self._applyProduction(startGraph, prod, mapping)
-            prod.incr_count();
+            prod.incr_count()
 
             print "Applied Production: "
             print prod.lhs, " => ", prod.rhs, ": ", prod.count
 
+            iteration += 1
+            edges = [(v1.name[0] + v1.id[1:], v2.name[0] + v2.id[1:]) for (v1, v2) in startGraph.edges]
+            vertices = [v.name[0] + v.id[1:] for v in startGraph.vertices]
+            graph_name = 'r_' + str(iteration)
+            add_edges(add_nodes(graph(), vertices),edges).render('img/' + graph_name)
+            
+
         self._showCounts(productions)
         
         print 'Final Graph: ', startGraph
+
+        edges = [(v1.name[0] + v1.id[1:], v2.name[0] + v2.id[1:]) for (v1, v2) in startGraph.edges]
+
+        
+        for e in edges:
+            (v1, v2) = e
+            print v1, '->', v2
+
+        vertices = [v.name[0] + v.id[1:] for v in startGraph.vertices]
+        #print vertices
+        graph_name = 'r_after'
+        add_edges(add_nodes(graph(), vertices),edges).render('img/' + graph_name) 
 
 
     #--------------------------------------------------------------------------
@@ -140,10 +190,97 @@ class Reducer(object):
         Outputs: None
         """
         rhsMapping = self._mapRHSToGraph(graph, production, lhsMapping)
+        cvs = self._getConnectedVertices(graph, lhsMapping, rhsMapping)
         self._deleteMissingVertices(graph, production, lhsMapping)
-        self._deleteMissingEdges(graph, production, lhsMapping, rhsMapping)
+        #self._deleteMissingEdges(graph, production, lhsMapping, rhsMapping)
         self._addNewVertices(graph, production, rhsMapping)
         self._addNewEdges(graph, production, rhsMapping)
+
+        if len(cvs) > 0:
+            self._connectGraph(graph, lhsMapping, rhsMapping, cvs)
+
+
+    def _connectGraph(self, graph, lhsMapping, rhsMapping, cvs):
+        logging.debug("Inside connectGraph...")
+        
+        lhsTemp = [lhsMapping[key] for key in lhsMapping]
+        rhsTemp = [rhsMapping[key] for key in rhsMapping]
+        lhsVerts = {}
+        rhsVerts = {}
+        lhsNames = []
+        rhsNames = []
+
+        for v in graph.vertices:
+            for vid in lhsTemp:
+                if vid == v.id:
+                    lhsVerts[vid] = v.name
+                    lhsNames.append(v.name)
+
+            for vid in rhsTemp:
+                if vid == v.id:
+                    rhsVerts[vid] = v.name
+                    rhsNames.append(v.name)
+                            
+        edges = [(v1.name[0] + v1.id[1:], v2.name[0] + v2.id[1:]) for (v1, v2) in graph.edges]
+        vertices = [v.name[0] + v.id[1:] for v in graph.vertices]
+
+        print "Names: ", rhsNames
+        rhsLast = rhsNames[-1]
+        rhsVid = ""
+        for vid in rhsVerts:
+            if rhsVerts[vid] == rhsLast:
+                rhsVid = vid
+                break
+
+        print "RV: ", rhsVid
+
+        print "CV: "
+        for cv in cvs:
+            for v in graph.vertices:
+                if v.name == cv:
+                    print "Adding edge ", rhsLast, ' ', cv
+                    graph.addEdge(rhsVid, v.id)
+            
+
+    def _getConnectedVertices(self, graph, lhsMapping, rhsMapping):
+        logging.debug("Inside getConnectedVertices...")
+        
+        lhsTemp = [lhsMapping[key] for key in lhsMapping]
+        rhsTemp = [rhsMapping[key] for key in rhsMapping]
+        lhsVerts = {}
+        rhsVerts = {}
+        lhsNames = []
+        rhsNames = []
+
+        for v in graph.vertices:
+            for vid in lhsTemp:
+                if vid == v.id:
+                    lhsVerts[vid] = v.name
+                    lhsNames.append(v.name)
+
+            for vid in rhsTemp:
+                if vid == v.id:
+                    rhsVerts[vid] = v.name
+                    rhsNames.append(v.name)
+                            
+        edges = [(v1.name[0] + v1.id[1:], v2.name[0] + v2.id[1:]) for (v1, v2) in graph.edges]
+        vertices = [v.name[0] + v.id[1:] for v in graph.vertices]
+
+        cvs = []
+
+        for v in lhsNames:
+            if v not in rhsNames:
+                for (v1, v2) in edges:
+                    if v1 == v:
+                        if v2 not in lhsNames and v2 not in cvs:
+                            cvs.append(v2)
+
+                    elif v2 == v:
+                        if v1 not in lhsNames and v1 not in cvs:
+                            cvs.append(v1)
+
+        return cvs
+            
 
     #--------------------------------------------------------------------------
     def _deleteMissingEdges(self, graph, production, lhsMapping, rhsMapping):
@@ -160,7 +297,7 @@ class Reducer(object):
               to graph
         Outputs: None
         """
-        # logging.debug('>>> _deleteMissingEdges <<<')
+        logging.debug('>>> _deleteMissingEdges <<<')
         for lhsEdge in production.lhs.edges:    # [startVertex,endVertex]
 
             # Find the starting and ending vertices of the corresponding edge in graph.
@@ -172,7 +309,7 @@ class Reducer(object):
             # doesn't exist either, so delete it from graph.
             rhsStart = [rhsID for rhsID,graphID in rhsMapping.items() if graphID == graphStartVID]
             if len(rhsStart) == 0:
-                # logging.debug('edge start from %s to %s does not appear in rhs' % (lhsEdge[0], lhsEdge[1]))
+                logging.debug('edge start from %s to %s does not appear in rhs' % (lhsEdge[0], lhsEdge[1]))
                 graph.deleteEdge(graphStartVID, graphEndVID)
                 continue
 
@@ -181,15 +318,15 @@ class Reducer(object):
             # doesn't exist either, so delete it from graph.
             rhsEnd = [rhsID for rhsID,graphID in rhsMapping.items() if graphID == graphEndVID]
             if len(rhsEnd) == 0:
-                # logging.debug('edge end from %s to %s does not appear in rhs' % (lhsEdge[0], lhsEdge[1]))
+                logging.debug('edge end from %s to %s does not appear in rhs' % (lhsEdge[0], lhsEdge[1]))
                 graph.deleteEdge(graphStartVID, graphEndVID)
                 continue
 
             # We found both rhs vertices, but are they connected with an
             # edge? If not, the delete the edge from graph.
             if not production.rhs.hasEdgeBetweenVertices(rhsStart[0], rhsEnd[0]):
-                # logging.debug('edge from %s to %s does not appear in rhs' % (lhsEdge[0], lhsEdge[1]))
-                # logging.debug('deleting edge from %s to %s' % (graphStartVID, graphEndVID))
+                logging.debug('edge from %s to %s does not appear in rhs' % (lhsEdge[0], lhsEdge[1]))
+                logging.debug('deleting edge from %s to %s' % (graphStartVID, graphEndVID))
                 graph.deleteEdge(graphStartVID, graphEndVID)
 
         # logging.debug('graph is now %s' % graph)
@@ -207,11 +344,12 @@ class Reducer(object):
                     and graph
         Outputs: None
         """
-        # logging.debug('>>> _deleteMissingVertices <<<')
+        logging.debug('>>> _deleteMissingVertices <<<')
         for lhsVertex in production.lhs.vertices:
+            print "LHSVertex: ", lhsVertex
             if not production.rhs.findVertex(lhsVertex.name):
                 graphVertexID = lhsMapping[lhsVertex.id]
-                # logging.debug('deleting vertex %s' % graphVertexID)
+                logging.debug('deleting vertex %s' % graphVertexID)
                 graph.deleteVertex(graphVertexID)
 
     #--------------------------------------------------------------------------
