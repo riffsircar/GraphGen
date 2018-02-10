@@ -109,6 +109,10 @@ class Generator(object):
         f = self._parseGrammarFile(grammarFile.read())
         grammarFile.close()
 
+        NUM_RULES = len(f.productions)
+        if len(WEIGHTS) != NUM_RULES:
+            raise RuntimeError('Number of rule weights not equal to number of rules.')
+
         self.applyProductions(f.startGraph, f.productions, f.config)
         return f.startGraph
 
@@ -354,13 +358,16 @@ class Generator(object):
 # debug, info, warning, error and critical
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
+    num_args = len(sys.argv)
+    if num_args < 2:
         print >> sys.stderr, "Usage: %s GRAMMAR_FILE" % sys.argv[0]
         sys.exit(1)
     e = Generator()
-    #probs = sys.argv[2]
     NAME = sys.argv[2]
     NUM_VERTICES = sys.argv[3]
+    WEIGHTS = []
+    for i in range(4,num_args):
+        WEIGHTS.append(sys.argv[i])
     e.generateFromFile(sys.argv[1])
 
 # vim:nowrap
