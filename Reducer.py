@@ -224,7 +224,10 @@ class Reducer(object):
         edges = [(v1.name[0] + v1.id[1:], v2.name[0] + v2.id[1:]) for (v1, v2) in graph.edges]
         vertices = [v.name[0] + v.id[1:] for v in graph.vertices]
 
-        print "Names: ", rhsNames
+        graph_edges = [(v1.id, v2.id) for (v1,v2) in graph.edges]
+        graph_vertices = [v.id for v in graph.vertices]
+
+        #print "Names: ", rhsNames
         rhsLast = rhsNames[-1]
         rhsVid = ""
         for vid in rhsVerts:
@@ -232,12 +235,13 @@ class Reducer(object):
                 rhsVid = vid
                 break
 
-        print "RV: ", rhsVid
+        #print "RV: ", rhsVid
 
         print "CV: "
         for cv in cvs:
             for v in graph.vertices:
-                if v.name == cv:
+                #if v.name == cv:
+                if v.id == cv:
                     print "Adding edge ", rhsLast, ' ', cv
                     graph.addEdge(rhsVid, v.id)
             
@@ -252,6 +256,11 @@ class Reducer(object):
         lhsNames = []
         rhsNames = []
 
+        #print "LHS Mapping: ", lhsMapping
+        #print "RHS Mapping: ", rhsMapping
+        #print "LHS Temp: ", lhsTemp
+        #print "RHS Temp: ", rhsTemp
+
         for v in graph.vertices:
             for vid in lhsTemp:
                 if vid == v.id:
@@ -264,12 +273,19 @@ class Reducer(object):
                     rhsNames.append(v.name)
                             
         edges = [(v1.name[0] + v1.id[1:], v2.name[0] + v2.id[1:]) for (v1, v2) in graph.edges]
+        graph_edges = [(v1.id, v2.id) for (v1, v2) in graph.edges]
         vertices = [v.name[0] + v.id[1:] for v in graph.vertices]
 
         cvs = []
 
+        #print "LHS Names: ", lhsNames
+        #print "RHS Names: ", rhsNames
+        #print "GE: ", graph_edges
+        #print "Edges: ", edges
+        """
         for v in lhsNames:
             if v not in rhsNames:
+                print v
                 for (v1, v2) in edges:
                     if v1 == v:
                         if v2 not in lhsNames and v2 not in cvs:
@@ -278,7 +294,21 @@ class Reducer(object):
                     elif v2 == v:
                         if v1 not in lhsNames and v1 not in cvs:
                             cvs.append(v1)
+                print "CVS: ", cvs
+        """
 
+        for v in lhsTemp:
+            if v not in rhsTemp:
+                print v
+                for (v1, v2) in graph_edges:
+                    if v1 == v:
+                        if v2 not in lhsTemp and v2 not in cvs:
+                            cvs.append(v2)
+                    elif v2 == v:
+                        if v1 not in lhsTemp and v1 not in cvs:
+                            cvs.append(v1)
+                #print "CVS: ", cvs
+        
         return cvs
             
 

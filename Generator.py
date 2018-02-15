@@ -113,6 +113,9 @@ class Generator(object):
         if len(WEIGHTS) != NUM_RULES:
             raise RuntimeError('Number of rule weights not equal to number of rules.')
 
+        if sum(WEIGHTS) != 1.0:
+            raise RuntimeError("Weights don't sum to 1, you schmendrik!")
+
         self.applyProductions(f.startGraph, f.productions, f.config)
         return f.startGraph
 
@@ -289,7 +292,7 @@ class Generator(object):
 
         # logging.debug('In _findMatchingProductions')
         solutions = []
-        weights = [0.8,0.2]
+        weights = WEIGHTS
         #weights = [1.0]
         # prod = np.random.choice(productions, p=weights)
 
@@ -367,7 +370,7 @@ if __name__ == '__main__':
     NUM_VERTICES = sys.argv[3]
     WEIGHTS = []
     for i in range(4,num_args):
-        WEIGHTS.append(sys.argv[i])
+        WEIGHTS.append(float(sys.argv[i]))
     e.generateFromFile(sys.argv[1])
 
 # vim:nowrap
