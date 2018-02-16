@@ -1,0 +1,8 @@
+productions {
+# Start graph
+B19->B20, A13->X14, A13->X15, A10->X11, A10->X12, A16->X17, A16->X18, X17->B19, B20->X21, X0->A1, X0->A16, A1->X2, A1->X3, X2->B4, X3->B7, B4->B5, B5->X6, X6->A10, X6->A13, B7->B8, B8->X9;
+
+# Productions
+X1 -> B1, B1 -> B2, B2 -> X2 ==> X1;
+X1 -> A1 -> X2, A1 -> X3 ==> X1;
+}

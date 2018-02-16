@@ -36,7 +36,7 @@ class Parser(object):
     #--------------------------------------------------------------------------
     def parse(self):
         """grammar_file -> configuration productions."""
-        self._parseConfiguration()
+        #self._parseConfiguration()
         self._parseProductions()
 
     #--------------------------------------------------------------------------

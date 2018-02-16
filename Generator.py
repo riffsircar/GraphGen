@@ -95,7 +95,36 @@ class Generator(object):
         graph_name = NAME + '_' + NUM_VERTICES        
         add_edges(add_nodes(graph(), vertices),edges).render('img/' + graph_name) 
 
-    
+    def outputReverseFile(self, filename, f):
+        text_filename = filename + ".txt"
+        
+        grammarFile = open(GRAMMAR, "r")
+        rules = []
+        for line in grammarFile:
+            if "==>" in line:
+                idx = line.index("==>")
+                lhs = line[:idx].strip()
+                rhs = line[idx+3:-2].strip()
+                rule = rhs + " ==> " + lhs
+                rules.append(rule)
+
+        text_file = open(text_filename, "w")
+
+        edges = [(v1.name[0]+v1.id[1:], v2.name[0]+v2.id[1:]) for (v1,v2) in f.startGraph.edges]
+        start_graph = ""
+        for (v1,v2) in edges:
+            start_graph += v1 + "->" + v2 +", "
+        start_graph = start_graph[:-2] + ";"
+        output = "productions {\n"
+        output += "# Start graph\n"
+        output += start_graph
+        output += "\n\n# Productions\n"
+        for rule in rules:
+            output += rule + ";\n"
+        output += "}"
+        text_file.write(output)
+        text_file.close()
+        
 
     #--------------------------------------------------------------------------
     def generateFromFile(self, filename):
@@ -117,7 +146,10 @@ class Generator(object):
             raise RuntimeError("Weights don't sum to 1, you schmendrik!")
 
         self.applyProductions(f.startGraph, f.productions, f.config)
+        graph_name = NAME + '_' + NUM_VERTICES + '_rev'
+        self.outputReverseFile(graph_name, f)
         return f.startGraph
+
 
     #--------------------------------------------------------------------------
     # PRIVATE METHODS - These aren't the methods you're looking for.
@@ -349,6 +381,7 @@ class Generator(object):
         Inputs: grammarFile - string contents of a graph grammar file
         Outputs: Parser after it has parsed the given input
         """
+        #print grammarFile
         p = Parser(Lexer(grammarFile))
         p.parse()
         return p
@@ -366,11 +399,13 @@ if __name__ == '__main__':
         print >> sys.stderr, "Usage: %s GRAMMAR_FILE" % sys.argv[0]
         sys.exit(1)
     e = Generator()
+    GRAMMAR = sys.argv[1]
     NAME = sys.argv[2]
     NUM_VERTICES = sys.argv[3]
+    
     WEIGHTS = []
     for i in range(4,num_args):
         WEIGHTS.append(float(sys.argv[i]))
-    e.generateFromFile(sys.argv[1])
+    e.generateFromFile(GRAMMAR)
 
 # vim:nowrap

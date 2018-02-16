@@ -71,7 +71,7 @@ class Reducer(object):
         graph_name = 'r_' + str(iteration)
         add_edges(add_nodes(graph(), vertices),edges).render('img/' + graph_name)
         # logging.debug('In applyProductions')
-        while startGraph.numVertices >= int(config['min_vertices']):      # for reversing grammar rules
+        while startGraph.numVertices >= 1:      
             # matchingProductions is a list of (Production, mapping) 
             # pairs where mapping is {vid->vid} dictionary of where 
             # the production's lhs vertices can be found in startGraph.
