@@ -43,7 +43,27 @@ class Generator(object):
             * config - dictionary of options
         Outputs: None
         """
+        def add_nodes(graph, nodes):
+            for n in nodes:
+                if isinstance(n, tuple):
+                    graph.node(n[0], **n[1])
+                else:
+                    graph.node(n)
+            return graph
+
+        def add_edges(graph, edges):
+            for e in edges:
+                if isinstance(e[0], tuple):
+                    graph.edge(*e[0], **e[1])
+                else:
+                    graph.edge(*e)
+            return graph
         print 'Starting Graph: ', startGraph
+        iteration = 0
+        edges = [(v1.name[0] + v1.id[1:], v2.name[0] + v2.id[1:]) for (v1, v2) in startGraph.edges]
+        vertices = [v.name[0] + v.id[1:] for v in startGraph.vertices]
+        graph_name = NAME + '_' + str(iteration)
+        add_edges(add_nodes(graph(), vertices),edges).render('img/' + graph_name)
         # logging.debug('In applyProductions')
         #while startGraph.numVertices < int(config['min_vertices']):
         while startGraph.numVertices < int(NUM_VERTICES):
@@ -62,6 +82,12 @@ class Generator(object):
 
             self._applyProduction(startGraph, prod, mapping)
 
+            iteration += 1
+            edges = [(v1.name[0] + v1.id[1:], v2.name[0] + v2.id[1:]) for (v1, v2) in startGraph.edges]
+            vertices = [v.name[0] + v.id[1:] for v in startGraph.vertices]
+            graph_name = NAME + '_' + str(iteration)
+            add_edges(add_nodes(graph(), vertices),edges).render('img/' + graph_name)
+
         self._showCounts(productions)
         print 'Final Graph: ', startGraph, '\n'
 
@@ -73,24 +99,6 @@ class Generator(object):
         for e in edges:
             (v1, v2) = e
             print v1, '->', v2
-
-
-        def add_nodes(graph, nodes):
-            for n in nodes:
-                if isinstance(n, tuple):
-                    graph.node(n[0], **n[1])
-                else:
-                    graph.node(n)
-            return graph
-
-        def add_edges(graph, edges):
-            for e in edges:
-                if isinstance(e[0], tuple):
-                    graph.edge(*e[0], **e[1])
-                else:
-                    graph.edge(*e)
-            return graph
-
 
         graph_name = NAME + '_' + NUM_VERTICES        
         add_edges(add_nodes(graph(), vertices),edges).render('img/' + graph_name) 
@@ -143,7 +151,7 @@ class Generator(object):
             raise RuntimeError('Number of rule weights not equal to number of rules.')
 
         if sum(WEIGHTS) != 1.0:
-            raise RuntimeError("Weights don't sum to 1, you schmendrik!")
+            raise RuntimeError("Weights don't sum to 1, you dingus!")
 
         self.applyProductions(f.startGraph, f.productions, f.config)
         graph_name = NAME + '_' + NUM_VERTICES + '_rev'
@@ -304,7 +312,7 @@ class Generator(object):
         solutions = []
         for prod in productions:
             # logging.debug('Checking production LHS %s ' % prod.lhs)
-
+            print "Prod: ", prod.lhs, ' ', prod.rhs
             # Find all places where prod.lhs can be found in graph.
             listOfMatches = graph.search(prod.lhs)
             if len(listOfMatches) > 0:
@@ -328,16 +336,20 @@ class Generator(object):
         #weights = [1.0]
         # prod = np.random.choice(productions, p=weights)
 
-        cs = np.cumsum(weights) #An array of the weights, cumulatively summed.
-        idx = sum(cs < np.random.rand())  #Find the index of the first weight over a random value.
-        productions[idx].incr_count()
-        prod = productions[idx]
-        
-        print "Selected Production:\n", prod.lhs, " ==> ", prod.rhs, "Count: ", prod.count;
-        # logging.debug('Checking production LHS %s ' % prod.lhs)
+        while True:
+            cs = np.cumsum(weights) #An array of the weights, cumulatively summed.
+            idx = sum(cs < np.random.rand())  #Find the index of the first weight over a random value.
+            #productions[idx].incr_count()
+            prod = productions[idx]
+            # logging.debug('Checking production LHS %s ' % prod.lhs)
 
-        # Find all places where prod.lhs can be found in graph.
-        listOfMatches = graph.search(prod.lhs)
+            # Find all places where prod.lhs can be found in graph.
+            listOfMatches = graph.search(prod.lhs)
+            if len(listOfMatches) > 0:
+                break
+            
+        productions[idx].incr_count()
+        print "Selected Production:\n", prod.lhs, " ==> ", prod.rhs, "Count: ", prod.count;
         if len(listOfMatches) > 0:
             for match in listOfMatches:
                 solutions.append( (prod, match) )
@@ -388,6 +400,7 @@ class Generator(object):
 
     def _showCounts(self, productions):
 
+        print "Number of applications: "
         for prod in productions:
             print prod.lhs, " ==> ", prod.rhs, "\nCount: ", prod.count 
 

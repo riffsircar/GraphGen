@@ -1,0 +1,10 @@
+productions {
+# Start graph
+V18->C1, V13->C11, V14->C4, V0->C1, V0->C4, V0->C16, V2->C1, V2->C5, V2->C15, V3->C1, V3->C8, V3->C12, V3->C19, V6->C1, V7->C1, V7->C10, V7->C11, V7->C17, V9->C4;
+
+# Productions
+V -> C1, V -> C2 ==> V -> C1;
+V1 -> C, V2 -> C ==> V1 -> C;
+V1 -> C1, V1 -> C2 ==> V1 -> C1, V2 -> C2;
+V1 -> C1, V2 -> C1; ==> V1 -> C1, V2 -> C2;
+}
