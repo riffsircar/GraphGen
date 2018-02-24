@@ -126,7 +126,7 @@ class Generator(object):
         output = "productions {\n"
         output += "# Start graph\n"
         output += start_graph
-        output += "\n\n# Productions\n"
+        output += "\n\n# Rules\n"
         for rule in rules:
             output += rule + ";\n"
         output += "}"
