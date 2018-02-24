@@ -282,20 +282,6 @@ class Reducer(object):
         #print "RHS Names: ", rhsNames
         #print "GE: ", graph_edges
         #print "Edges: ", edges
-        """
-        for v in lhsNames:
-            if v not in rhsNames:
-                print v
-                for (v1, v2) in edges:
-                    if v1 == v:
-                        if v2 not in lhsNames and v2 not in cvs:
-                            cvs.append(v2)
-
-                    elif v2 == v:
-                        if v1 not in lhsNames and v1 not in cvs:
-                            cvs.append(v1)
-                print "CVS: ", cvs
-        """
 
         for v in lhsTemp:
             if v not in rhsTemp:
